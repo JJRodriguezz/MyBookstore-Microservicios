@@ -1,0 +1,243 @@
+services:
+
+  # 🌐 FRONTEND
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "3007:80"
+    depends_on:
+      - nginx
+    networks:
+      - backend-network
+
+  # 🔵 API GATEWAY
+  nginx:
+    image: nginx:latest
+    container_name: api-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - book-service
+      - user-service
+      - order-service
+      - inventory-service
+      - payment-service
+      - review-service
+      - auth-service
+    networks:
+      - backend-network
+
+  # 🟢 BOOK
+  postgres-book:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: bookdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_book_data:/var/lib/postgresql/data
+      - ./services/book-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  book-service:
+    build: ./services/book-service
+    ports:
+      - "3000:3000"
+      - "50051:50051"
+    depends_on:
+      - postgres-book
+    environment:
+      DB_HOST: postgres-book
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: bookdb
+    networks:
+      - backend-network
+
+  # 🟡 USER
+  postgres-user:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: userdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+      - ./services/user-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "3001:3001"
+      - "50052:50052"
+    depends_on:
+      - postgres-user
+    environment:
+      DB_HOST: postgres-user
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: userdb
+    networks:
+      - backend-network
+
+  # 🔴 ORDER
+  postgres-order:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: orderdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+      - ./services/order-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "3002:3002"
+      - "50053:50053"
+    depends_on:
+      - postgres-order
+      - user-service
+      - book-service
+      - inventory-service
+      - payment-service
+    environment:
+      DB_HOST: postgres-order
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: orderdb
+      USER_SERVICE_URL: user-service:50052
+      BOOK_SERVICE_URL: book-service:50051
+      INVENTORY_SERVICE_URL: inventory-service:50054
+      PAYMENT_SERVICE_URL: payment-service:50055
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+    networks:
+      - backend-network
+
+  # 🟣 INVENTORY
+  postgres-inventory:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: inventorydb
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_inventory_data:/var/lib/postgresql/data
+      - ./services/inventory-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  inventory-service:
+    build: ./services/inventory-service
+    ports:
+      - "3003:3003"
+      - "50054:50054"
+    depends_on:
+      - postgres-inventory
+    environment:
+      DB_HOST: postgres-inventory
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: inventorydb
+    networks:
+      - backend-network
+
+  # 🟠 PAYMENT
+  payment-service:
+    build: ./services/payment-service
+    ports:
+      - "3004:3004"
+      - "50055:50055"
+    networks:
+      - backend-network
+
+  # ⚫ REVIEW
+  postgres-review:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: reviewdb
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_review_data:/var/lib/postgresql/data
+      - ./services/review-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  review-service:
+    build: ./services/review-service
+    ports:
+      - "3005:3005"
+      - "50056:50056"
+    depends_on:
+      - postgres-review
+    environment:
+      DB_HOST: postgres-review
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: reviewdb
+    networks:
+      - backend-network
+
+  # 🔐 AUTH
+  postgres-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: authdb
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+      - ./services/auth-service/init-db:/docker-entrypoint-initdb.d
+    networks:
+      - backend-network
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3006:3006"
+    depends_on:
+      - postgres-auth
+      - user-service
+    environment:
+      DB_HOST: postgres-auth
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: authdb
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      USER_SERVICE_URL: http://user-service:3001
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+
+volumes:
+  postgres_book_data:
+  postgres_user_data:
+  postgres_order_data:
+  postgres_inventory_data:
+  postgres_review_data:
+  postgres_auth_data:

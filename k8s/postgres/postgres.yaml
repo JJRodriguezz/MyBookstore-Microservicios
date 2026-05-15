@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: bookstore
+data:
+  init.sql: |
+    CREATE DATABASE bookdb;
+    CREATE DATABASE userdb;
+    CREATE DATABASE orderdb;
+    CREATE DATABASE authdb;
+    CREATE DATABASE inventorydb;
+    CREATE DATABASE paymentdb;
+    CREATE DATABASE reviewdb;
+
+    \c bookdb
+
+    CREATE TABLE IF NOT EXISTS books (
+      id SERIAL PRIMARY KEY,
+      title TEXT,
+      author TEXT
+    );
+
+    INSERT INTO books (title, author)
+    VALUES
+    ('1984', 'George Orwell'),
+    ('Sapiens', 'Yuval Noah Harari'),
+    ('El arte de la guerra', 'Sun Tzu');
+
+    \c userdb
+
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT,
+      email TEXT
+    );
+
+    INSERT INTO users (name, email)
+    VALUES
+    ('Juan Perez', 'juan@test.com'),
+    ('Maria Lopez', 'maria@test.com');
+
+    \c orderdb
+
+    CREATE TABLE IF NOT EXISTS orders (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT,
+      book_id TEXT
+    );
+
+    \c inventorydb
+
+    CREATE TABLE IF NOT EXISTS inventory (
+      id SERIAL PRIMARY KEY,
+      book_id TEXT UNIQUE,
+      quantity INT
+    );
+
+    INSERT INTO inventory (book_id, quantity) VALUES
+    ('1', 10),
+    ('2', 5),
+    ('3', 0);
+
+    \c reviewdb
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id SERIAL PRIMARY KEY,
+      book_id TEXT,
+      user_id TEXT,
+      content TEXT
+    );
+
+    \c authdb
+
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE,
+      password TEXT
+    );
+
+    INSERT INTO users (id, email, password) VALUES
+      (1, 'juan@test.com', '$2b$10$NtuZ/YDeTWHExXUTCBc.t.y9QyGUh4SVBzb1M5j3cZVbNQIm2uJ.6'),
+      (2, 'maria@test.com', '$2b$10$NtuZ/YDeTWHExXUTCBc.t.y9QyGUh4SVBzb1M5j3cZVbNQIm2uJ.6')
+    ON CONFLICT (id) DO NOTHING;
+
+    SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT COALESCE(MAX(id), 1) FROM users));
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: bookstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: init-script
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: postgres-storage
+          emptyDir: {}
+        - name: init-script
+          configMap:
+            name: postgres-init
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: bookstore
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

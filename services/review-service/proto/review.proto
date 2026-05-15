@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package review;
+
+service ReviewService {
+  rpc GetReviewsByBook (GetReviewsRequest) returns (ReviewList);
+}
+
+message GetReviewsRequest {
+  string book_id = 1;
+}
+
+message Review {
+  string id = 1;
+  string book_id = 2;
+  string user_id = 3;
+  string content = 4;
+}
+
+message ReviewList {
+  repeated Review reviews = 1;
+}

@@ -1,37 +1,82 @@
-# Ignore Node
+# Dependencies
 node_modules/
-npm-debug.log
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Ignore Environment variables
-*.env
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 backend.env
 frontend.env
+.env.secrets
 
-# Ignore Logs
+# Logs
 logs/
 *.log
-logs/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# Ignore Editor files
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# IDE & Editor
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS files
+*.sublime-project
+*.sublime-workspace
+*.iml
 .DS_Store
 Thumbs.db
+.env.local
+.vscode/settings.json
 
 # Build outputs
 dist/
 build/
-.out/
 .next/
+.out/
 coverage/
+.turbo/
 
-# Ignore Dockerfiles
+# Docker
 docker-compose.override.yml
 docker-data/
+Dockerfile.dev
+
+# OS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# Debug files
+debugEnv.js
+*.debug
+debug/
+
+# Test coverage
+.nyc_output/
+coverage/
+*.lcov
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDE specific
+.vscode/launch.json
+.vscode/settings.json

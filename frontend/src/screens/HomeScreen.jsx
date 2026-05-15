@@ -3,6 +3,7 @@ import { Col, Row } from 'react-bootstrap';
 import HomeCarousel from '../components/Carousel';
 import Book from '../components/Book';
 import { api } from '../lib/api';
+import { enrichBooks } from '../lib/bookPresentation';
 
 
 const HomeScreen = () => {
@@ -11,8 +12,8 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const { data } = await api.get('/api/books/');
-        setBooks(data);
+        const { data } = await api.get('/books');
+        setBooks(enrichBooks(data));
       } catch (error) {
         console.error("Error loading books:", error);
       }

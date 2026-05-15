@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: bookstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: 061709796715.dkr.ecr.us-east-1.amazonaws.com/mybookstore-order-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3002
+            - containerPort: 50053
+          env:
+            - name: PORT
+              value: "3002"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: jwt-secret
+            - name: DB_HOST
+              value: postgres
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db-password
+            - name: DB_NAME
+              value: orderdb
+            - name: USER_SERVICE_URL
+              value: user-service:50052
+            - name: BOOK_SERVICE_URL
+              value: book-service:50051
+            - name: INVENTORY_SERVICE_URL
+              value: inventory-service:50054
+            - name: PAYMENT_SERVICE_URL
+              value: payment-service:50055

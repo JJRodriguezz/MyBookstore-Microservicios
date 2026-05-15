@@ -8,6 +8,9 @@ import BookScreen from './screens/BookScreen';
 import AboutScreen from './screens/AboutScreen';
 import LoginScreen from './screens/Login';
 import ProfileScreen from './screens/ProfileScreen';
+import OrdersScreen from './screens/OrdersScreen';
+import CartScreen from './screens/CartScreen';
+import RegisterScreen from './screens/RegisterScreen';
 
 
 const App = () => {
@@ -20,8 +23,11 @@ const App = () => {
             <Route path='/' element={<HomeScreen />} />
             <Route path='/about' element={<AboutScreen />} />
             <Route path='/login' element={<LoginScreen />} />
+            <Route path='/register' element={<RegisterScreen />} />
             <Route path='/book/:id'  element={<BookScreen />} />
             <Route path='/profile' element={<ProfileScreen />} />
+            <Route path='/orders' element={<OrdersScreen />} />
+            <Route path='/cart' element={<CartScreen />} />
             
           </Routes>
         </Container>

@@ -1,27 +1,24 @@
-FROM node:20-alpine AS builder
+# build
+FROM node:18 AS build
 
 WORKDIR /app
 
-# Copy dependencies
 COPY package*.json ./
+RUN npm install
 
-# Install the required dependencies 
-RUN npm ci
-
-# Copy app files
 COPY . .
 
-# Build the front end app to be distributed
+# Misma URL para API y SPA (NLB → gateway): cadena vacía = rutas relativas al mismo host
+ARG VITE_API_URL=
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN npm run build
 
-# Bundle static assets with nginx
-FROM nginx:1.25-alpine AS development
+# serve
+FROM nginx:alpine
 
-# Copy built assets
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx template
-COPY default.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

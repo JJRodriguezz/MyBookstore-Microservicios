@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package order;
+
+service OrderService {
+  rpc GetOrders (Empty) returns (OrderList);
+  rpc GetOrder (GetOrderRequest) returns (Order);
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string book_id = 3;
+}
+
+message OrderList {
+  repeated Order orders = 1;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message Empty {}

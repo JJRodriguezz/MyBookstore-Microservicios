@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: bookstore
+spec:
+  selector:
+    app: order-service
+  ports:
+    - name: http
+      port: 3002
+      targetPort: 3002
+    - name: grpc
+      port: 50053
+      targetPort: 50053

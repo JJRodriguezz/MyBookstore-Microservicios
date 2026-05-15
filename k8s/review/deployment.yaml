@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service
+  namespace: bookstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      labels:
+        app: review-service
+    spec:
+      containers:
+        - name: review-service
+          image: 061709796715.dkr.ecr.us-east-1.amazonaws.com/mybookstore-review-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3005
+            - containerPort: 50056
+          env:
+            - name: PORT
+              value: "3005"
+            - name: DB_HOST
+              value: postgres
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: db-password
+            - name: DB_NAME
+              value: reviewdb
